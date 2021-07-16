@@ -1,9 +1,8 @@
 <?php
 
-namespace Preetender\Query\Concerns;
+namespace Leve\Finder\Concerns;
 
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 trait Map
 {

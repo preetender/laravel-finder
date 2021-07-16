@@ -1,4 +1,4 @@
-# laravel-qs-api
+# laravel-finder
 
 Classe simples para tratar de requisições GET para consultas elegantes no eloquent.
 

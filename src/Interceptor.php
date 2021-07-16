@@ -1,33 +1,19 @@
 <?php
 
-namespace Preetender\Query;
+namespace Leve\Finder;
 
+use ReflectionClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Preetender\Query\Concerns\Map;
-use ReflectionClass;
+use Leve\Finder\Concerns\Map;
 
 final class Interceptor
 {
     use Map;
 
-    /**
-     * @var Request
-     */
-    protected $request;
+    protected mixed $eloquent;
 
-    /**
-     * @var
-     */
-    protected $eloquent;
-
-    /**
-     * @param Request $request
-     */
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
-    }
+    public function __construct(protected Request $request){}
 
     /**
      * Obtem instancia da requisição atual.

@@ -1,9 +1,11 @@
 <?php
 
-namespace Preetender\Query;
+namespace Leve\Finder;
 
+use Illuminate\Container\Container;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;
+use Illuminate\Support\Facades\App;
 
 class ApiResource extends JsonResource
 {
@@ -18,13 +20,13 @@ class ApiResource extends JsonResource
     {
         list($method, $key) = explode(',', $param);
 
-        // maps
-        $query = request()->query();
+        $query = Container::getInstance()->make('request')->all();
 
         $keys = 0;
-        $tests = 10;
-        do {
 
+        $tests = 10;
+        
+        do {
             if ($keys === 0 && isset($query[$method]) && array_key_exists($key, $query[$method])) {
                 return value($value);
             }
@@ -35,7 +37,6 @@ class ApiResource extends JsonResource
                 return value($value);
             }
 
-            // next
             $keys++;
         } while ($keys <= $tests);
 
