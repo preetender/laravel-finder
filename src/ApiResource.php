@@ -5,7 +5,6 @@ namespace Leve\Finder;
 use Illuminate\Container\Container;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MissingValue;
-use Illuminate\Support\Facades\App;
 
 class ApiResource extends JsonResource
 {
@@ -22,23 +21,23 @@ class ApiResource extends JsonResource
 
         $query = Container::getInstance()->make('request')->all();
 
-        $keys = 0;
+        $index = 0;
 
-        $tests = 10;
+        $max = 10;
         
         do {
-            if ($keys === 0 && isset($query[$method]) && array_key_exists($key, $query[$method])) {
+            if ($index === 0 && isset($query[$method]) && array_key_exists($key, $query[$method])) {
                 return value($value);
             }
 
-            $identified = "$method:$keys";
+            $identified = "$method:$index";
 
             if (isset($query[$identified]) && array_key_exists($key, $query[$identified])) {
                 return value($value);
             }
 
-            $keys++;
-        } while ($keys <= $tests);
+            $index++;
+        } while ($index <= $max);
 
         return new MissingValue;
     }
