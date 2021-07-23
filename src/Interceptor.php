@@ -13,7 +13,17 @@ final class Interceptor
 
     protected mixed $eloquent;
 
-    public function __construct(protected Request $request){}
+    public function __construct(protected Request $request)
+    {
+    }
+
+    public const PARSE_INT = [
+        'limit',
+        'paginate',
+        'take',
+        'offset',
+        'skip'
+    ];
 
     /**
      * Obtem instancia da requisição atual.
@@ -38,7 +48,7 @@ final class Interceptor
 
         $parameters = $this->request->all();
 
-        if (sizeof($parameters) > 0) {
+        if (count($parameters) > 0) {
             $params = [];
 
             // Gerar atributos enumerados
@@ -52,12 +62,17 @@ final class Interceptor
 
                 if (method_exists($this, $method)) {
                     $arguments = !is_array($arguments) ? [$arguments] : $this->extractArguments($arguments);
+
+                    if (in_array($method, self::PARSE_INT)) {
+                        $arguments = array_map('intval', $arguments);
+                    }
+
                     call_user_func_array([$this, $method], $arguments);
                 }
             }
         }
 
-        return $this->request->has('paginate') ? $this->eloquent->paginate($this->request->paginate) : $this->eloquent->get();
+        return $this->request->has('paginate') ? $this->eloquent->paginate(intval($this->request->paginate)) : $this->eloquent->get();
     }
 
     /**
@@ -78,6 +93,7 @@ final class Interceptor
     private function where($column, $values): void
     {
         $params = $this->prepareConditionals($values);
+
         $this->eloquent = $this->eloquent->where($column, ...$params);
     }
 
