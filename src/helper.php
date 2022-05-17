@@ -4,6 +4,8 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Config;
 
 if (! function_exists('app')) {
     /**
@@ -31,7 +33,7 @@ if (! function_exists('config')) {
      *
      * @param  array|string|null  $key
      * @param  mixed  $default
-     * @return mixed|\Illuminate\Config\Repository
+     * @return mixed|Config
      */
     function config($key = null, $default = null)
     {
@@ -64,7 +66,9 @@ if (! function_exists('abort')) {
         if ($code instanceof Response) {
             throw new HttpResponseException($code);
         } elseif ($code instanceof Responsable) {
-            throw new HttpResponseException($code->toResponse(request()));
+            throw new HttpResponseException(
+                $code->toResponse(App::make('request'))
+            );
         }
 
         app()->abort($code, $message, $headers);

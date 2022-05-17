@@ -1,6 +1,6 @@
 <?php
 
-namespace Leve\Finder\Concerns;
+namespace Preetender\Finder\Concerns;
 
 use Illuminate\Support\Str;
 

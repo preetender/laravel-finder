@@ -1,11 +1,11 @@
 <?php
 
-namespace Leve\Finder;
+namespace Preetender\Finder;
 
 use ReflectionClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Leve\Finder\Concerns\Map;
+use Preetender\Finder\Concerns\Map;
 
 final class Interceptor
 {

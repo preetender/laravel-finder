@@ -1,6 +1,6 @@
 {
-  "name": "leveinvestimentos/laravel-finder",
-  "description": "Executa consultas no eloquente via reqisição",
+  "name": "preetender/laravel-finder",
+  "description": "consulta informações via querystring.",
   "require-dev": {
     "illuminate/container": "^8.0",
     "illuminate/support": "^8.0",
@@ -12,13 +12,13 @@
       "src/helper.php"
     ],
     "psr-4": {
-      "Leve\\Finder\\": "src/"
+      "Preetender\\Finder\\": "src/"
     }
   },
   "license": "MIT",
   "authors": [
     {
-      "name": "César Augusto",
+      "name": "César Gutierres",
       "email": "cesinhagutierres@gmail.com"
     }
   ],

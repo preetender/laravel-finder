@@ -1,6 +1,6 @@
 <?php
 
-namespace Leve\Finder;
+namespace Preetender\Finder;
 
 use Illuminate\Container\Container;
 use Illuminate\Http\Resources\Json\JsonResource;
