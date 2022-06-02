@@ -2,16 +2,16 @@
 
 namespace Preetender\Finder;
 
+use Illuminate\Database\Eloquent\Builder;
 use ReflectionClass;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Preetender\Finder\Concerns\Map;
 
 final class Interceptor
 {
     use Map;
 
-    protected mixed $eloquent;
+    protected Builder $eloquent;
 
     public function __construct(protected Request $request)
     {
@@ -82,7 +82,8 @@ final class Interceptor
     private function select($value): void
     {
         $fields = explode(',', $value);
-        $this->eloquent = $this->eloquent->select(...$fields);
+
+        $this->eloquent->select(...$fields);
     }
 
     /**
@@ -94,7 +95,7 @@ final class Interceptor
     {
         $params = $this->prepareConditionals($values);
 
-        $this->eloquent = $this->eloquent->where($column, ...$params);
+        $this->eloquent->where($column, ...$params);
     }
 
     /**
@@ -103,7 +104,7 @@ final class Interceptor
      */
     private function whereNull($column): void
     {
-        $this->eloquent = $this->eloquent->whereNull($column);
+        $this->eloquent->whereNull($column);
     }
 
     /**
@@ -112,7 +113,7 @@ final class Interceptor
      */
     private function whereNotNull($column): void
     {
-        $this->eloquent = $this->eloquent->whereNotNull($column);
+        $this->eloquent->whereNotNull($column);
     }
 
     /**
@@ -126,7 +127,7 @@ final class Interceptor
     {
         $params = $this->prepareConditionals($values);
 
-        $this->eloquent = $this->eloquent->whereTime($column, ...$params);
+        $this->eloquent->whereTime($column, ...$params);
     }
 
     /**
@@ -137,7 +138,8 @@ final class Interceptor
     private function whereDate($column, $values): void
     {
         $params = $this->prepareConditionals($values);
-        $this->eloquent = $this->eloquent->whereDate($column, ...$params);
+
+        $this->eloquent->whereDate($column, ...$params);
     }
     /**
      * @param $column
@@ -147,7 +149,8 @@ final class Interceptor
     private function whereYear($column, $values): void
     {
         $params = $this->prepareConditionals($values);
-        $this->eloquent = $this->eloquent->whereYear($column, ...$params);
+
+        $this->eloquent->whereYear($column, ...$params);
     }
 
     /**
@@ -158,7 +161,8 @@ final class Interceptor
     private function whereMonth($column, $values): void
     {
         $params = $this->prepareConditionals($values);
-        $this->eloquent = $this->eloquent->whereMonth($column, ...$params);
+
+        $this->eloquent->whereMonth($column, ...$params);
     }
 
     /**
@@ -169,7 +173,8 @@ final class Interceptor
     private function whereDay($column, $values): void
     {
         $params = $this->prepareConditionals($values);
-        $this->eloquent = $this->eloquent->whereDay($column, ...$params);
+
+        $this->eloquent->whereDay($column, ...$params);
     }
 
     /**
@@ -179,7 +184,7 @@ final class Interceptor
      */
     private function whereIn($column, $values): void
     {
-        $this->eloquent = $this->eloquent->whereIn($column, $values);
+        $this->eloquent->whereIn($column, $values);
     }
 
     /**
@@ -189,7 +194,7 @@ final class Interceptor
      */
     private function whereNotIn($column, $values): void
     {
-        $this->eloquent = $this->eloquent->whereNotIn($column, $values);
+        $this->eloquent->whereNotIn($column, $values);
     }
 
     /**
@@ -199,7 +204,7 @@ final class Interceptor
      */
     private function whereBetween($column, $values): void
     {
-        $this->eloquent = $this->eloquent->whereBetween($column, $values);
+        $this->eloquent->whereBetween($column, $values);
     }
 
     /**
@@ -209,7 +214,7 @@ final class Interceptor
      */
     private function whereNotBetween($column, $values): void
     {
-        $this->eloquent = $this->eloquent->whereNotBetween($column, $values);
+        $this->eloquent->whereNotBetween($column, $values);
     }
 
     /**
@@ -220,7 +225,8 @@ final class Interceptor
     private function orWhere($column, $values): void
     {
         $params = $this->prepareConditionals($values);
-        $this->eloquent = $this->eloquent->orWhere($column, ...$params);
+
+        $this->eloquent->orWhere($column, ...$params);
     }
 
     /**
@@ -230,7 +236,8 @@ final class Interceptor
      */
     private function orWhereIn($column, $values): void
     {
-        $this->eloquent = $this->eloquent->orWhereIn($column, $values);
+
+        $this->eloquent->orWhereIn($column, $values);
     }
 
     /**
@@ -240,7 +247,8 @@ final class Interceptor
      */
     private function orWhereNotIn($column, $values): void
     {
-        $this->eloquent = $this->eloquent->orWhereNotIn($column, $values);
+
+        $this->eloquent->orWhereNotIn($column, $values);
     }
 
     /**
@@ -250,7 +258,7 @@ final class Interceptor
      */
     private function orWhereBetween($column, $values): void
     {
-        $this->eloquent = $this->eloquent->orWhereBetween($column, $values);
+        $this->eloquent->orWhereBetween($column, $values);
     }
 
     /**
@@ -260,7 +268,7 @@ final class Interceptor
      */
     private function orWhereNotBetween($column, $values): void
     {
-        $this->eloquent = $this->eloquent->orWhereNotBetween($column, $values);
+        $this->eloquent->orWhereNotBetween($column, $values);
     }
     /**
      * @param $column
@@ -268,7 +276,7 @@ final class Interceptor
      */
     private function orWhereNull($column): void
     {
-        $this->eloquent = $this->eloquent->orWhereNull($column);
+        $this->eloquent->orWhereNull($column);
     }
 
     /**
@@ -277,7 +285,7 @@ final class Interceptor
      */
     private function orWhereNotNull($column): void
     {
-        $this->eloquent = $this->eloquent->orWhereNotNull($column);
+        $this->eloquent->orWhereNotNull($column);
     }
 
     /**
@@ -288,7 +296,8 @@ final class Interceptor
     private function having($column, $values): void
     {
         $params = $this->prepareConditionals($values);
-        $this->eloquent = $this->eloquent->having($column, ...$params);
+
+        $this->eloquent->having($column, ...$params);
     }
 
     /**
@@ -297,7 +306,7 @@ final class Interceptor
      */
     private function limit($value): void
     {
-        $this->eloquent = $this->eloquent->limit($value);
+        $this->eloquent->limit($value);
     }
 
     /**
@@ -306,7 +315,7 @@ final class Interceptor
      */
     private function offset($value): void
     {
-        $this->eloquent = $this->eloquent->offset($value);
+        $this->eloquent->offset($value);
     }
 
     /**
@@ -317,7 +326,7 @@ final class Interceptor
      */
     private function skip($value): void
     {
-        $this->eloquent = $this->eloquent->skip($value);
+        $this->eloquent->skip($value);
     }
 
     /**
@@ -328,7 +337,7 @@ final class Interceptor
      */
     private function take($value): void
     {
-        $this->eloquent = $this->eloquent->take($value);
+        $this->eloquent->take($value);
     }
 
     /**
@@ -339,7 +348,8 @@ final class Interceptor
     private function orderBy($column, $values): void
     {
         $params = $this->prepareConditionals($values);
-        $this->eloquent = $this->eloquent->orderBy($column, $values[0]);
+
+        $this->eloquent->orderBy($column, $values[0]);
     }
 
     /**
@@ -349,7 +359,7 @@ final class Interceptor
      */
     private function groupBy($columns): void
     {
-        $this->eloquent = $this->eloquent->groupBy($columns);
+        $this->eloquent->groupBy($columns);
     }
 
     /**
@@ -360,15 +370,12 @@ final class Interceptor
     private function selectRaw(): void
     {
         $expression = $this->prepareRaw(func_get_arg(0));
+
         $values = func_num_args() > 1 ? func_get_arg(1) ?? [] : [];
 
-        if (func_num_args() === 1) {
-            $this->eloquent = $this->eloquent->selectRaw($expression);
-        } else {
-            // selectRaw[expression]=variables
-            // selectRaw[sum(?) as soma]=total
-            $this->eloquent = $this->eloquent->selectRaw($expression, $values);
-        }
+        // selectRaw[expression]=variables
+        // selectRaw[sum(?) as soma]=total
+        $this->eloquent->selectRaw($expression, $values);
     }
 
     /**
@@ -379,17 +386,14 @@ final class Interceptor
     private function havingRaw(): void
     {
         $expression = $this->prepareRaw(func_get_arg(0));
+
         $values = func_num_args() > 1 ? func_get_arg(1) ?? [] : [];
 
-        if (func_num_args() === 1) {
-            $this->eloquent = $this->eloquent->havingRaw($expression);
-        } else {
-            // havingRaw[expression]=variables
-            // havingRaw[id > ?]=10
-            // havingRaw[count(id) > ?]=10
-            // havingRaw[sum(id) > ?]=10
-            $this->eloquent = $this->eloquent->havingRaw($expression, $values);
-        }
+        // havingRaw[expression]=variables
+        // havingRaw[id > ?]=10
+        // havingRaw[count(id) > ?]=10
+        // havingRaw[sum(id) > ?]=10
+        $this->eloquent->havingRaw($expression, $values);
     }
 
     /**
@@ -400,7 +404,8 @@ final class Interceptor
     private function orderByRaw(): void
     {
         $expression = $this->prepareRaw(func_get_arg(0));
-        $this->eloquent = $this->eloquent->orderByRaw($expression);
+
+        $this->eloquent->orderByRaw($expression);
     }
 
     /**
@@ -411,15 +416,12 @@ final class Interceptor
     private function whereRaw(): void
     {
         $expression = $this->prepareRaw(func_get_arg(0));
-        $values = func_num_args() > 1 ? func_get_arg(1) ?? [] : [];
+        
+        $values = func_num_args() > 1 ? (func_get_arg(1) ?? []) : [];
 
-        if (func_num_args() === 1) {
-            $this->eloquent = $this->eloquent->whereRaw($expression);
-        } else {
-            // whereRaw[expression]=variables
-            // whereRaw[id > IF(...,?,..)]=10
-            $this->eloquent = $this->eloquent->whereRaw($expression, $values);
-        }
+        // whereRaw[expression]=variables
+        // whereRaw[id > IF(...,?,..)]=10
+        $this->eloquent->whereRaw($expression, $values);
     }
 
     /**
@@ -429,14 +431,7 @@ final class Interceptor
      */
     private function scope($action, $value = null): void
     {
-        $method = Str::start(Str::studly($action), 'scope');
-        $model = $this->eloquent->getModel();
-
-        if (!method_exists($model, $method)) {
-            return;
-        }
-
-        $this->eloquent = $this->eloquent->{$action}($value);
+        $this->eloquent->{$action}($value);
     }
 
     /**
@@ -446,9 +441,9 @@ final class Interceptor
      */
     private function with($relation, $values): void
     {
-        $keys = implode(',', $values);
+        $keys = implode(',', empty($values) ? ['*'] : $values);
 
-        $this->eloquent = $this->eloquent->with("{$relation}:$keys");
+        $this->eloquent->with("{$relation}:$keys");
     }
 
     /**
@@ -458,6 +453,6 @@ final class Interceptor
      */
     private function call(string $call, $value = []): void
     {
-        $this->eloquent = $this->eloquent->getModel()->{$call}(...$value);
+        $this->eloquent->{$call}(...$value);
     }
 }

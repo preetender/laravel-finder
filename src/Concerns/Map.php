@@ -16,6 +16,7 @@ trait Map
     protected function prepareConditionals($parameters): array
     {
         $params = [];
+        
         switch (count($parameters)) {
             case 1:
                 array_push($params, '=', $parameters[0]);
