@@ -3,6 +3,7 @@
 namespace Preetender\Finder;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use ReflectionClass;
 use Illuminate\Http\Request;
 use Preetender\Finder\Concerns\Map;
@@ -11,7 +12,7 @@ final class Interceptor
 {
     use Map;
 
-    protected Builder $eloquent;
+    protected Builder|Model $eloquent;
 
     public function __construct(protected Request $request)
     {
