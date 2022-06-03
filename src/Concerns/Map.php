@@ -6,7 +6,6 @@ use Illuminate\Support\Str;
 
 trait Map
 {
-
     /**
      * Extrair parametros e montar query.
      *
@@ -16,38 +15,22 @@ trait Map
     protected function prepareConditionals($parameters): array
     {
         $params = [];
-        
-        switch (count($parameters)) {
-            case 1:
-                array_push($params, '=', $parameters[0]);
-                break;
-            case 2:
-                array_push($params, $parameters[0], $parameters[1]);
-                break;
+
+        $map = fn($column, $parameters) => match (count($parameters)) {
+            1 => [$column, '=', $parameters[0]],
+            2 => [$column, $parameters[0], $parameters[1]],
+            default => [$column, ...$parameters]
+        };
+
+        foreach ($parameters as $key => $value) {
+            $values = explode(',', $value);
+
+            $params[] = $map(Str::snake($key), $values);
         }
+
         return $params;
     }
-
-    /**
-     * Extrair argumentos do parametro.
-     *
-     * @param $arguments
-     * @return array
-     */
-    protected function extractArguments($arguments): array
-    {
-        $key = array_keys($arguments)[0];
-        $values = array_values($arguments);
-
-        if (Str::contains($values[0], ',')) {
-            $values = explode(',', str_replace(['[', ']'], '', $values[0]));
-        }
-
-        return [
-            $key,
-            $values,
-        ];
-    }
+    
     /**
      * Remover caracteres inválidos para montar a sintaxe.
      *
@@ -57,5 +40,4 @@ trait Map
     {
         return str_replace(['[', ']', '__'], ['', '', ' '], $expression);
     }
-
 }

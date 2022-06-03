@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use ReflectionClass;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Preetender\Finder\Concerns\Map;
 
 final class Interceptor
@@ -14,10 +15,6 @@ final class Interceptor
 
     protected Builder|Model $eloquent;
 
-    public function __construct(protected Request $request)
-    {
-    }
-
     public const PARSE_INT = [
         'limit',
         'paginate',
@@ -25,6 +22,11 @@ final class Interceptor
         'offset',
         'skip'
     ];
+
+
+    public function __construct(protected Request $request)
+    {
+    }
 
     /**
      * Obtem instancia da requisição atual.
@@ -45,415 +47,121 @@ final class Interceptor
      */
     public function watch($model, $newInstance = false)
     {
-        $this->eloquent = $newInstance ? (new ReflectionClass($model))->newInstance() : $model;
+        $eloquent = $newInstance ? (new ReflectionClass($model))->newInstance() : $model;
 
-        $parameters = $this->request->all();
+        $fillable = $eloquent instanceof Model ? $eloquent->getFillable() : $eloquent->getModel()->getFillable();
 
-        if (count($parameters) > 0) {
-            $params = [];
+        $params = $this->request->query->all();
 
-            // Gerar atributos enumerados
-            for ($i = 1; $i <= 10; $i++) {
-                $params[] = ":$i";
-            }
+        if (count($params) > 0) {
 
-            foreach ($parameters as $method => $arguments) {
-                $method = str_replace($params, '', $method);
-                $arguments = is_array($arguments) ? $arguments : json_decode($arguments, JSON_OBJECT_AS_ARRAY) ?? $arguments;
+            foreach(Arr::wrap($params) as $method => $parameters) {
 
-                if (method_exists($this, $method)) {
-                    $arguments = !is_array($arguments) ? [$arguments] : $this->extractArguments($arguments);
+                if (preg_match("/^(or)?where((Not)?(Null))$|^(limit|take|offset|skip)$/m", $method)) {
+                    $value = [
+                        'array' => fn() => array_keys($parameters)[0],
+                        'string' => fn() => $parameters
+                    ][gettype($parameters)]();
 
-                    if (in_array($method, self::PARSE_INT)) {
-                        $arguments = array_map('intval', $arguments);
+                    if(in_array($method, self::PARSE_INT)) {
+                        $value = (int) $value;
                     }
 
-                    call_user_func_array([$this, $method], $arguments);
+                    $eloquent = $eloquent->{$method}($value);
+
+                    continue;
                 }
+
+                if(preg_match("/^(or)?where(Time|Date|Year|Month|Day)?$/m", $method)) {
+                    $params = $this->prepareConditionals($parameters);
+
+                    $eloquent = $eloquent->{$method}($params);
+
+                    continue;
+                }
+
+                if(preg_match("/^(or)?where((Not)?(In|Between))?$/m", $method)) {
+
+                    foreach($parameters as $column => $values) {
+                        $eloquent = $eloquent->{$method}($column, explode(',', $values));
+                    }
+
+                    continue;
+                }
+
+                if(!method_exists($this, $method)) {
+
+                    abort_if($method !== "strict" && $this->request->has('strict'), 412, "query {$method} not allowed");
+
+                    continue;
+                }
+
+                $eloquent = call_user_func_array([$this, $method], [$eloquent, $parameters, $fillable]);
             }
         }
 
-        return $this->request->has('paginate') ? $this->eloquent->paginate(intval($this->request->paginate)) : $this->eloquent->get();
+        return $this->request->has('paginate') ? $eloquent->paginate(intval($this->request->paginate)) : $eloquent->get();
     }
 
     /**
      * @param $value
-     * @return void
+     * @return mixed
      */
-    private function select($value): void
+    private function select($eloquent, $value): mixed
     {
         $fields = explode(',', $value);
 
-        $this->eloquent->select(...$fields);
+        return $eloquent->select(...$fields);
     }
 
     /**
      * @param $column
      * @param $values
-     * @return void
      */
-    private function where($column, $values): void
+    private function orderBy($eloquent, $columns): mixed
     {
-        $params = $this->prepareConditionals($values);
+        foreach($columns as $column => $value) {
+            $eloquent = $eloquent->orderBy($column, $value);
+        }
 
-        $this->eloquent->where($column, ...$params);
-    }
-
-    /**
-     * @param $column
-     * @return void
-     */
-    private function whereNull($column): void
-    {
-        $this->eloquent->whereNull($column);
-    }
-
-    /**
-     * @param $column
-     * @return void
-     */
-    private function whereNotNull($column): void
-    {
-        $this->eloquent->whereNotNull($column);
-    }
-
-    /**
-     * values: value,operator
-     *
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereTime($column, $values): void
-    {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->whereTime($column, ...$params);
+        return $eloquent;
     }
 
     /**
      * @param $column
      * @param $values
-     * @return void
+     * @return mixed
      */
-    private function whereDate($column, $values): void
+    private function groupBy($eloquent, $columns): mixed
     {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->whereDate($column, ...$params);
-    }
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereYear($column, $values): void
-    {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->whereYear($column, ...$params);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereMonth($column, $values): void
-    {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->whereMonth($column, ...$params);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereDay($column, $values): void
-    {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->whereDay($column, ...$params);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereIn($column, $values): void
-    {
-        $this->eloquent->whereIn($column, $values);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereNotIn($column, $values): void
-    {
-        $this->eloquent->whereNotIn($column, $values);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereBetween($column, $values): void
-    {
-        $this->eloquent->whereBetween($column, $values);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function whereNotBetween($column, $values): void
-    {
-        $this->eloquent->whereNotBetween($column, $values);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function orWhere($column, $values): void
-    {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->orWhere($column, ...$params);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function orWhereIn($column, $values): void
-    {
-
-        $this->eloquent->orWhereIn($column, $values);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function orWhereNotIn($column, $values): void
-    {
-
-        $this->eloquent->orWhereNotIn($column, $values);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function orWhereBetween($column, $values): void
-    {
-        $this->eloquent->orWhereBetween($column, $values);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function orWhereNotBetween($column, $values): void
-    {
-        $this->eloquent->orWhereNotBetween($column, $values);
-    }
-    /**
-     * @param $column
-     * @return void
-     */
-    private function orWhereNull($column): void
-    {
-        $this->eloquent->orWhereNull($column);
-    }
-
-    /**
-     * @param $column
-     * @return void
-     */
-    private function orWhereNotNull($column): void
-    {
-        $this->eloquent->orWhereNotNull($column);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function having($column, $values): void
-    {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->having($column, ...$params);
-    }
-
-    /**
-     * @param $value
-     * @return void
-     */
-    private function limit($value): void
-    {
-        $this->eloquent->limit($value);
-    }
-
-    /**
-     * @param $value
-     * @return void
-     */
-    private function offset($value): void
-    {
-        $this->eloquent->offset($value);
-    }
-
-    /**
-     * alias offset
-     *
-     * @param $value
-     * @return void
-     */
-    private function skip($value): void
-    {
-        $this->eloquent->skip($value);
-    }
-
-    /**
-     * alias offset
-     *
-     * @param $value
-     * @return void
-     */
-    private function take($value): void
-    {
-        $this->eloquent->take($value);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function orderBy($column, $values): void
-    {
-        $params = $this->prepareConditionals($values);
-
-        $this->eloquent->orderBy($column, $values[0]);
-    }
-
-    /**
-     * @param $column
-     * @param $values
-     * @return void
-     */
-    private function groupBy($columns): void
-    {
-        $this->eloquent->groupBy($columns);
-    }
-
-    /**
-     * Raw expressions
-     *
-     * @return void
-     */
-    private function selectRaw(): void
-    {
-        $expression = $this->prepareRaw(func_get_arg(0));
-
-        $values = func_num_args() > 1 ? func_get_arg(1) ?? [] : [];
-
-        // selectRaw[expression]=variables
-        // selectRaw[sum(?) as soma]=total
-        $this->eloquent->selectRaw($expression, $values);
-    }
-
-    /**
-     * Raw expressions
-     *
-     * @return void
-     */
-    private function havingRaw(): void
-    {
-        $expression = $this->prepareRaw(func_get_arg(0));
-
-        $values = func_num_args() > 1 ? func_get_arg(1) ?? [] : [];
-
-        // havingRaw[expression]=variables
-        // havingRaw[id > ?]=10
-        // havingRaw[count(id) > ?]=10
-        // havingRaw[sum(id) > ?]=10
-        $this->eloquent->havingRaw($expression, $values);
-    }
-
-    /**
-     * Raw expressions
-     *
-     * @return void
-     */
-    private function orderByRaw(): void
-    {
-        $expression = $this->prepareRaw(func_get_arg(0));
-
-        $this->eloquent->orderByRaw($expression);
-    }
-
-    /**
-     * Raw expressions
-     *
-     * @return void
-     */
-    private function whereRaw(): void
-    {
-        $expression = $this->prepareRaw(func_get_arg(0));
-        
-        $values = func_num_args() > 1 ? (func_get_arg(1) ?? []) : [];
-
-        // whereRaw[expression]=variables
-        // whereRaw[id > IF(...,?,..)]=10
-        $this->eloquent->whereRaw($expression, $values);
+        return $eloquent->groupBy($columns);
     }
 
     /**
      * @param $action
      * @param null $value
-     * @return void
+     * @return mixed
      */
-    private function scope($action, $value = null): void
+    private function scope($eloquent, $scopes): mixed
     {
-        $this->eloquent->{$action}($value);
+        foreach($scopes as $scope => $parameters) {
+            $eloquent = $eloquent->{$scope}($parameters);
+        }
+
+        return $eloquent;
     }
 
     /**
      * @param $relation
      * @param $values
-     * @return void
+     * @return mixed
      */
-    private function with($relation, $values): void
+    private function with($eloquent, $with): mixed
     {
-        $keys = implode(',', empty($values) ? ['*'] : $values);
+        foreach($with as $relation => $value) {
+            $eloquent = $eloquent->with("{$relation}:$value");
+        }
 
-        $this->eloquent->with("{$relation}:$keys");
-    }
-
-    /**
-     * Executar metodos dentro da model
-     *
-     * @return void
-     */
-    private function call(string $call, $value = []): void
-    {
-        $this->eloquent->{$call}(...$value);
+        return $eloquent;
     }
 }
